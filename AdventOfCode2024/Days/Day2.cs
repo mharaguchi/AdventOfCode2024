@@ -13,6 +13,29 @@ namespace AdventOfCode2024.Days
 8 6 4 4 1
 1 3 6 7 9";
 
+        public static string _sampleInputEdgeCases = @"48 46 47 49 51 54 56
+1 1 2 3 4 5
+1 2 3 4 5 5
+5 1 2 3 4 5
+1 4 3 2 1
+1 6 7 8 9
+1 2 3 4 3
+9 8 7 6 7
+7 10 8 10 11
+29 28 27 25 26 25 22 20
+7 10 8 10 11
+90 89 86 84 83 79
+97 96 93 91 85
+29 26 24 25 21
+36 37 40 43 47
+43 44 47 48 49 54
+35 33 31 29 27 25 22 18
+77 76 73 70 64
+68 65 69 72 74 77 80 83
+37 40 42 43 44 47 51
+70 73 76 79 86
+1 2 3 4 5 5";
+
         public static string Run(string input, int part, bool useSampleData)
         {
             if (part == 1)
@@ -27,7 +50,7 @@ namespace AdventOfCode2024.Days
             {
                 if (useSampleData)
                 {
-                    return RunPart2(_sampleInput);
+                    return RunPart2(_sampleInputEdgeCases);
                 }
                 return RunPart2(input);
             }
@@ -40,38 +63,13 @@ namespace AdventOfCode2024.Days
 
             foreach(var line in lines)
             {
-                var ascending = true;
-                var isAscendingSet = false;
                 var levels = FileInputUtils.SplitLineIntoIntList(line, " ");
-                for(int i = 1; i < levels.Count; i++)
+
+                if (!IsSafe(levels))
                 {
-                    var firstNum = levels[i - 1];
-                    var secondNum = levels[i];
-                    if (firstNum == secondNum)
-                    {
-                        @unsafe++;
-                        break;
-                    }
-                    if (!isAscendingSet)
-                    {
-                        if (firstNum > secondNum)
-                        {
-                            ascending = false;
-                        }
-                        isAscendingSet = true;
-                    }
-                    if ((firstNum > secondNum && ascending) || (firstNum < secondNum && !ascending))
-                    {
-                        @unsafe++;
-                        break;
-                    }
-                    if (Math.Abs(firstNum - secondNum) > 3)
-                    {
-                        @unsafe++;
-                        break;
-                    }
+                    @unsafe++;
+                    continue;
                 }
-                isAscendingSet = false;
             }
             var total = lines.Length;
             var safe = total - @unsafe;
@@ -124,12 +122,19 @@ namespace AdventOfCode2024.Days
         {
             var lines = FileInputUtils.SplitLinesIntoStringArray(input);
             int @unsafe = 0;
+            int safe = 0;
 
             foreach (var line in lines)
             {
                 var ascending = true;
                 var isAscendingSet = false;
                 var levels = FileInputUtils.SplitLineIntoIntList(line, " ");
+
+                if (IsSafe(levels))
+                {
+                    safe++;
+                    continue;
+                }
 
                 var firstTracker = 0;
                 var secondTracker = 1;
@@ -142,10 +147,10 @@ namespace AdventOfCode2024.Days
                         var removeFirst = RemoveBadLevel(levels, firstTracker);
                         if (!IsSafe(removeFirst))
                         {
-                            Console.WriteLine(line + ": Unsafe");
                             @unsafe++;
                             break;
                         }
+                        safe++;
                         break;
                     }
                     if (!isAscendingSet)
@@ -158,46 +163,63 @@ namespace AdventOfCode2024.Days
                     }
                     if ((firstNum > secondNum && ascending) || (firstNum < secondNum && !ascending))
                     {
-                        var broken = false;
+                        var isSafe = false;
                         for (int i = 0; i <= secondTracker; i++)
                         {
                             if (IsSafe(RemoveBadLevel(levels, i))){
-                                broken = true;
+                                isSafe = true;
                                 break;
                             }
                         }
-                        if (broken)
+                        if (isSafe)
                         {
+                            safe++;
                             break;
                         }
-                        Console.WriteLine(line + ": Unsafe");
-                        @unsafe++;
-                        break;
+                        else
+                        {
+                            @unsafe++;
+                            break;
+                        }
                     }
                     if (Math.Abs(firstNum - secondNum) > 3)
                     {
-                        var broken = false;
+                        var isSafe = false;
                         for (int i = 0; i <= secondTracker; i++)
                         {
                             if (IsSafe(RemoveBadLevel(levels, i)))
                             {
-                                broken = true;
+                                isSafe = true;
                                 break;
                             }
                         }
-                        if (broken)
+                        if (isSafe)
                         {
+                            safe++;
+                            break;
+                        }
+                        else
+                        {
+                            @unsafe++;
                             break;
                         }
                     }
                     firstTracker++;
                     secondTracker++;
                 }
+                if (secondTracker == levels.Count)
+                {
+                    safe++;
+                }
             }
             var total = lines.Length;
-            var safe = total - @unsafe;
+            Console.WriteLine("safeTotal: " + safe);
+            Console.WriteLine("unsafe: " + @unsafe);
+            Console.WriteLine("safe plus unsafe: " + (safe + @unsafe));
+            Console.WriteLine("total by lines: " + total);
+            var minus = total - @unsafe;
 
-            return safe.ToString();
+            return minus.ToString();
         }
     }
 }
